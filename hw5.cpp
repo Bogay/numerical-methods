@@ -157,7 +157,7 @@ void print(const Matrix2D<T> mat)
     {
         for (size_t c = 0; c < mat.col(); c++)
         {
-            std::cout << std::setw(10) << mat.get(r, c) << ' ';
+            std::cout << std::fixed << std::setprecision(4) << std::setw(10) << mat.get(r, c) << ' ';
         }
         std::cout << '\n';
     }
@@ -205,31 +205,104 @@ std::tuple<Matrix2D<double>, Matrix2D<double>, Matrix2D<double>> plu_factorizati
     return std::make_tuple(P, L, U);
 }
 
+std::tuple<std::vector<double>, Matrix2D<double>, Matrix2D<double>> lu_factorization(
+    const Matrix2D<double> &A,
+    const std::vector<double> &B)
+{
+    assert(A.row() == B.size());
+
+    Matrix2D<double> U = A;
+    Matrix2D<double> L(A.row(), A.col());
+
+    // Make L an identity matrix
+    for (size_t r = 0; r < U.row(); r++)
+        L.get(r, r) = 1;
+    for (size_t c = 0; c < U.col(); c++)
+    {
+        for (size_t r = c + 1; r < U.row(); r++)
+        {
+            assert(U.get(c, c) != 0);
+            auto s = -U.get(r, c) / U.get(c, c);
+            U.add_row(r, c, s);
+            L.get(r, c) = -s;
+            // std::cout << "XXX\n";
+            // print(U);
+        }
+    }
+
+    // Solve Lc = B
+    auto x = B;
+    for (size_t r = 0; r < L.row(); r++)
+    {
+        for (size_t c = 0; c < r; c++)
+        {
+            x[r] -= x[c] * L.get(r, c);
+        }
+        x[r] /= L.get(r, r);
+    }
+    // Solve Ux = c
+    for (size_t r = U.row() - 1;; r--)
+    {
+        for (size_t c = r + 1; c < U.row(); c++)
+        {
+            x[r] -= x[c] * U.get(r, c);
+        }
+        x[r] /= U.get(r, r);
+
+        if (r == 0)
+            break;
+    }
+
+    return std::make_tuple(x, L, U);
+}
+
 int main()
 {
+    // std::vector<std::vector<double>> raw_A = {
+    //     {0, 0, -1, 1},
+    //     {1, 1, -1, 2},
+    //     {-1, -1, 2, 0},
+    //     {1, 2, 0, 2},
+    // };
     std::vector<std::vector<double>> raw_A = {
-        {0, 0, -1, 1},
-        {1, 1, -1, 2},
-        {-1, -1, 2, 0},
-        {1, 2, 0, 2},
+        {1.19, 2.11, -100, 1},
+        {14.2, +0.122, 12.2, -1},
+        {0, 100, -99.9, 1},
+        {15.3, 0.110, -13.1, -1},
     };
     Matrix2D<double> A(raw_A);
+    std::vector<double> b{1.12, 3.44, 2.15, 4.16};
 
-    const auto [P, L, U] = plu_factorization(A);
-    std::cout << "P = \n";
-    print(P);
+    auto [x, L, U] = lu_factorization(A, b);
+
     std::cout << "L = \n";
     print(L);
     std::cout << "U = \n";
     print(U);
-
-    auto PA = P.mul(A);
-    auto LU = L.mul(U);
-    std::cout << "PA = \n";
-    print(PA);
     std::cout << "LU = \n";
-    print(LU);
-    std::cout << (PA == LU ? "PA == LU" : "PA != LU") << '\n';
+    print(L.mul(U));
+    std::cout << "A = \n";
+    print(A);
+
+    for (auto v : x)
+        std::cout << v << ' ';
+    std::cout << '\n';
+
+    // const auto [P, L, U] = plu_factorization(A);
+    // std::cout << "P = \n";
+    // print(P);
+    // std::cout << "L = \n";
+    // print(L);
+    // std::cout << "U = \n";
+    // print(U);
+
+    // auto PA = P.mul(A);
+    // auto LU = L.mul(U);
+    // std::cout << "PA = \n";
+    // print(PA);
+    // std::cout << "LU = \n";
+    // print(LU);
+    // std::cout << (PA == LU ? "PA == LU" : "PA != LU") << '\n';
 
     return 0;
 }

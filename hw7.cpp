@@ -5,9 +5,10 @@
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 #define EPSILON 0.000000001
-#define DEBUG 0
+#define DEBUG 1
 
 template <typename T>
 class Matrix2D
@@ -361,6 +362,8 @@ public:
         this->funcs.push_back(df3);
     }
 
+    DF(std::vector<std::vector<func>> _funcs) : funcs(_funcs) {}
+
     Matrix2D<double> eval(double h, double k, double r)
     {
         Matrix2D<double> ret(3, 3);
@@ -460,7 +463,6 @@ std::vector<T> gaussian_elimination(const Matrix2D<T> &A)
 
 void solve_p7(std::vector<std::pair<double, double>> inputs)
 {
-
     std::vector<func> funcs;
     for (auto [x, y] : inputs)
     {
@@ -534,23 +536,155 @@ void solve_p7(std::vector<std::pair<double, double>> inputs)
 #endif
 }
 
+void solve_mid_e()
+{
+
+    auto f1 = [](double p, double q, double x, double y, double z)
+    {
+        return sin(x) + y * y + log(z) - 7;
+    };
+    // Maybe -sin
+    auto f1dx = [](double p, double q, double x, double y, double z)
+    {
+        return cos(x);
+    };
+    auto f1dy = [](double p, double q, double x, double y, double z)
+    {
+        return 2 * y;
+    };
+    auto f1dz = [](double p, double q, double x, double y, double z)
+    {
+        return 1 / z;
+    };
+    auto f2 = [](double p, double q, double x, double y, double z)
+    {
+        return 3 * x + 2 * y - z * z * z + 1;
+    };
+    auto f2dx = [](double p, double q, double x, double y, double z)
+    {
+        return 3;
+    };
+    auto f2dy = [](double p, double q, double x, double y, double z)
+    {
+        return 2;
+    };
+    auto f2dz = [](double p, double q, double x, double y, double z)
+    {
+        return -3 * z * z;
+    };
+    auto f3 = [](double p, double q, double x, double y, double z)
+    {
+        return x + y + z - 5;
+    };
+    auto f3dx = [](double p, double q, double x, double y, double z)
+    {
+        return 1;
+    };
+    auto f3dy = [](double p, double q, double x, double y, double z)
+    {
+        return 1;
+    };
+    auto f3dz = [](double p, double q, double x, double y, double z)
+    {
+        return 1;
+    };
+
+    std::vector<func> funcs{
+        func(0, 0, f1),
+        func(0, 0, f2),
+        func(0, 0, f3)};
+
+    std::vector<std::vector<func>> funcs2{
+        {func(0, 0, f1dx), func(0, 0, f1dy), func(0, 0, f1dz)},
+        {func(0, 0, f2dx), func(0, 0, f2dy), func(0, 0, f2dz)},
+        {func(0, 0, f3dx), func(0, 0, f3dy), func(0, 0, f3dz)},
+    };
+
+    F _F(funcs);
+    DF _DF(funcs2);
+
+    Matrix2D<double> x = {
+        {0},
+        {2},
+        {2},
+    };
+    assert(x.row() == 3 && x.col() == 1);
+
+#if DEBUG
+    std::cout << "Init x =";
+    print(x);
+#endif
+
+    int _try = 100000;
+    while (_try--)
+    {
+        auto A = _DF.eval(x.get(0, 0), x.get(1, 0), x.get(2, 0));
+        auto b = _F.eval(x.get(0, 0), x.get(1, 0), x.get(2, 0));
+        for (size_t i = 0; i < b.row(); i++)
+        {
+            b.get(i, 0) = -b.get(i, 0);
+        }
+        Matrix2D<double> s(A.row(), A.col() + 1);
+        for (size_t i = 0; i < s.row(); i++)
+        {
+            for (size_t j = 0; j < s.col() - 1; j++)
+            {
+                s.get(i, j) = A.get(i, j);
+            }
+            s.get(i, s.col() - 1) = b.get(i, 0);
+        }
+
+        auto s_ = gaussian_elimination(s);
+        Matrix2D<double> s__(s_.size(), 1);
+        for (size_t i = 0; i < s_.size(); i++)
+        {
+            s__.get(i, 0) = s_[i];
+        };
+
+        // double sum = 0;
+        // for (size_t i = 0; i < s.row(); i++)
+        // {
+        //     sum += abs(s__.get(i, 0));
+        // }
+        // if (sum < EPSILON)
+        //     break;
+        x = x + s__;
+    }
+
+#if DEBUG
+    std::cout << "try = " << _try << '\n';
+#endif
+
+    std::cout << "x = \n";
+    print(x);
+
+#if DEBUG
+    std::cout << "F(x) = \n";
+    for (auto fn : funcs)
+    {
+        std::cout << fn.eval(x.get(0, 0), x.get(1, 0), x.get(2, 0)) << '\n';
+    }
+#endif
+}
+
 int main()
 {
     srand(time(NULL));
 
-    std::vector<std::pair<double, double>> inputs = {
-        {-8, -4},
-        {6, 9},
-        {4, -9},
-    };
-    solve_p7(inputs);
+    // std::vector<std::pair<double, double>> inputs = {
+    //     {-8, -4},
+    //     {6, 9},
+    //     {4, -9},
+    // };
+    // solve_p7(inputs);
 
-    std::vector<std::pair<double, double>> inputs2 = {
-        {-1, 6},
-        {-2, -6},
-        {5, 0},
-    };
-    solve_p7(inputs2);
+    // std::vector<std::pair<double, double>> inputs2 = {
+    //     {-1, 6},
+    //     {-2, -6},
+    //     {5, 0},
+    // };
+    // solve_p7(inputs2);
+    solve_mid_e();
 
     return 0;
 }
