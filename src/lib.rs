@@ -6,11 +6,14 @@ pub use vec2::Vec2;
 
 use num_traits::{Float, Inv};
 use rand::{distributions::Standard, prelude::*};
-use std::ops::{Add, AddAssign, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Sub},
+};
 
 pub fn jacobi<'a, T>(a: Matrix2D<T>, b: Matrix2D<T>) -> Result<Matrix2D<T>, String>
 where
-    T: Clone + Inv<Output = T> + Default + AddAssign + Float,
+    T: Clone + Inv<Output = T> + Default + AddAssign + Float + Display,
     Standard: Distribution<T>,
     Matrix2D<T>: Add<Output = Matrix2D<T>> + Sub<Output = Matrix2D<T>>,
 {
@@ -21,7 +24,7 @@ where
     let mut rng = thread_rng();
     let mut x = b.clone();
     for i in 0..x.row() {
-        *x.get_mut(Vec2::new(0, i as i8)).unwrap() = T::from(rng.gen_range(0.0..16.0)).unwrap();
+        *x.get_mut(Vec2::new(0, i as i8)).unwrap() = T::from(rng.gen_range(-5.0..=5.0)).unwrap();
     }
 
     let mut d_inv = Matrix2D::new(a.size());
@@ -44,16 +47,84 @@ where
     }
     let lu = l + u;
 
-    let mut done = false;
-    while !done {
+    loop {
         let _x = d_inv.mul(b.clone() - lu.mul(x.clone()).unwrap()).unwrap();
-        done = (0..x.row()).all(|i| {
+
+        let done = (0..x.row()).all(|i| {
             let pos = Vec2::new(0, i as i8);
             let diff = x.get(pos).unwrap().clone() - _x.get(pos).unwrap().clone();
             diff == T::zero()
         });
+        if done {
+            break;
+        }
+
         x = _x;
     }
 
     Ok(x)
+}
+
+pub fn plu_solve(a: Matrix2D<f64>, mut b: Matrix2D<f64>) -> Matrix2D<f64> {
+    assert_eq!(a.row(), b.row());
+    assert_eq!(b.col(), 1);
+
+    let mut u = a.clone();
+    let mut l = Matrix2D::new(a.size());
+    let mut p = Matrix2D::<f64>::identity(a.row(), a.col());
+
+    for c in 0..u.col() {
+        let c = c as i8;
+        if u.get(Vec2::new(c, c)).unwrap() == &0. {
+            let mut k = c + 1;
+            while k < u.row() as i8 {
+                if u.get(Vec2::new(c, k)).unwrap() != &0. {
+                    u.swap(k as usize, c as usize).unwrap();
+                    p.swap(k as usize, c as usize).unwrap();
+                    l.swap(k as usize, c as usize).unwrap();
+
+                    b.swap(k as usize, c as usize).unwrap();
+                    break;
+                }
+                k += 1;
+            }
+            assert_ne!(k, u.row() as i8);
+        }
+
+        let d = *u.get(Vec2::new(c, c)).unwrap();
+        assert_ne!(d, 0.);
+        for r in c + 1..u.row() as i8 {
+            let s = -u.get(Vec2::new(c, r)).unwrap() / d;
+            u.add_row(r as usize, c as usize, s).unwrap();
+            *l.get_mut(Vec2::new(c, r)).unwrap() = -s;
+        }
+    }
+
+    for i in 0..l.row().min(l.col()) {
+        *l.get_mut(Vec2::new(i as i8, i as i8)).unwrap() = 1.;
+    }
+
+    let mut x = b.clone();
+    // solve Lc = B
+    for r in 0..l.row() {
+        let r = r as i8;
+        for c in 0..r {
+            let c = c as i8;
+            let v = x.get(Vec2::new(0, c)).unwrap() * l.get(Vec2::new(c, r)).unwrap();
+            *x.get_mut(Vec2::new(0, r)).unwrap() -= v;
+        }
+        *x.get_mut(Vec2::new(0, r)).unwrap() /= l.get(Vec2::new(r, r)).unwrap();
+    }
+    // solve Ux = c
+    for r in (0..u.row()).rev() {
+        let r = r as i8;
+        for c in r + 1..u.row() as i8 {
+            let v = x.get(Vec2::new(0, c)).unwrap() * u.get(Vec2::new(c, r)).unwrap();
+            *x.get_mut(Vec2::new(0, r)).unwrap() -= v;
+        }
+
+        *x.get_mut(Vec2::new(0, r)).unwrap() /= u.get(Vec2::new(r, r)).unwrap();
+    }
+
+    x
 }

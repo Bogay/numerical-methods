@@ -1,7 +1,7 @@
 use crate::vec2::{Square, Vec2};
 use num_traits::One;
 use std::{
-    fmt::{write, Debug, Display},
+    fmt::{Debug, Display},
     ops::{Add, AddAssign, Deref, DerefMut, Mul, MulAssign, Sub},
     str::FromStr,
 };
@@ -261,7 +261,7 @@ impl<T> Matrix2D<T> {
     }
 
     // Multiply any row by a constant
-    fn mul_scalar<C>(&mut self, row: usize, c: C) -> Result<(), String>
+    pub fn mul_scalar<C>(&mut self, row: usize, c: C) -> Result<(), String>
     where
         T: MulAssign<C>,
         C: Clone,
@@ -277,7 +277,7 @@ impl<T> Matrix2D<T> {
         Ok(())
     }
 
-    fn add_row<'a, C>(&'a mut self, dst: usize, src: usize, c: C) -> Result<(), String>
+    pub fn add_row<'a, C>(&'a mut self, dst: usize, src: usize, c: C) -> Result<(), String>
     where
         T: AddAssign<T> + Mul<C, Output = T> + Clone,
         C: Clone,
