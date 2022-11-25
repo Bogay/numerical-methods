@@ -293,6 +293,23 @@ impl<T> Matrix2D<T> {
 
         Ok(())
     }
+
+    pub fn transpose(self) -> Self {
+        let mut rows = (0..self.col())
+            .map(|_| Vec::with_capacity(self.row()))
+            .collect::<Vec<_>>();
+        let (row, col) = (self.row(), self.col());
+        for (i, v) in self.store.into_iter().enumerate() {
+            let i = i % rows.len();
+            rows[i].push(v);
+        }
+
+        let store = rows.into_iter().flat_map(|r| r).collect();
+        Self {
+            store,
+            size: Vec2::new(row as i8, col as i8),
+        }
+    }
 }
 
 impl<T> Deref for Matrix2D<T> {
@@ -441,5 +458,14 @@ mod tests {
 
         let expected = Matrix2D::from_vec(Vec2::new(2, 2), vec![41, 48, 17, 20]).unwrap();
         assert_eq!(c, expected);
+    }
+
+    #[test]
+    fn test_tranpose() {
+        let m = Matrix2D::from_vec(Vec2::new(2, 3), vec![1, 2, 3, 4, 5, 6])
+            .unwrap()
+            .transpose();
+        let expected = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 3, 5, 2, 4, 6]).unwrap();
+        assert_eq!(m, expected);
     }
 }
