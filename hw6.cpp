@@ -247,9 +247,9 @@ Matrix2D<double> input_a()
         for (size_t j = 0; j < 10; j++)
         {
             if (i == j)
-                ret.get(i, j) = -4;
+                ret.get(i, j) = 3;
             else if (abs(i - j) == 1)
-                ret.get(i, j) = 2;
+                ret.get(i, j) = -1;
         }
     }
 
@@ -283,6 +283,8 @@ Matrix2D<double> jacobi(Matrix2D<double> a, Matrix2D<double> b)
     }
     auto LU = L + U;
 
+    print(D_inv);
+
     bool done = false;
     while (!done)
     {
@@ -308,25 +310,29 @@ int main()
     srand(time(NULL));
 
     auto A = input_a();
+    // print(A);
+    // std::cout << "===\n";
     std::vector<std::vector<double>> raw_b{
         {2},
-        {3},
-        {4},
-        {5},
-        {6},
-        {7},
-        {8},
-        {9},
-        {10},
-        {11},
+        {1},
+        {1},
+        {1},
+        {1},
+        {1},
+        {1},
+        {1},
+        {1},
+        {2},
     };
     Matrix2D<double> b(raw_b);
     auto x = jacobi(A, b);
 
-    // auto b_ = A.mul(x);
+    auto b_ = A.mul(x);
     // print(b_);
     // std::cout << "===\n";
     // print(b);
+    // std::cout << "===\n";
+    assert(b == b_);
     print(x);
 
     return 0;
