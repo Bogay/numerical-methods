@@ -1,3 +1,4 @@
+extern crate bogay;
 use bogay::{plu_solve, Matrix2D, Vec2};
 
 fn main() {
