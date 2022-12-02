@@ -128,3 +128,68 @@ pub fn plu_solve(a: Matrix2D<f64>, mut b: Matrix2D<f64>) -> Matrix2D<f64> {
 
     x
 }
+
+/// Apply Gram-Schmidt orthogonalization to find reduced QR factorization on `a`
+pub fn gram_schmidt(a: Matrix2D<f64>, is_full_qr: bool) -> (Matrix2D<f64>, Matrix2D<f64>) {
+    let mut a_cols: Vec<_> = a
+        .iter_col()
+        .map(|col| {
+            Matrix2D::from_vec(
+                Vec2::new(1, a.row() as i8),
+                col.into_iter().map(|&v| v).collect(),
+            )
+            .unwrap()
+        })
+        .collect();
+
+    if is_full_qr {
+        assert!(a.row() > a.col());
+        let sz = a_cols[0].size();
+        for _ in 0..(a.row() - a.col()) {
+            a_cols.push(Matrix2D::fill(sz, 1.));
+        }
+    }
+
+    let mut qs: Vec<Matrix2D<_>> = vec![];
+    let mut r = Matrix2D::<f64>::new(Vec2::new(a.col() as i8, a_cols.len() as i8));
+    for (j, aj) in a_cols.iter().enumerate() {
+        let mut y = aj.clone();
+        for (i, q) in qs.iter().enumerate() {
+            let mut q = q.clone();
+            let r_s = *q
+                .clone()
+                .transpose()
+                .mul(aj.clone())
+                .unwrap()
+                .get(Vec2::new(0, 0))
+                .unwrap();
+
+            // It may out of range if is_full_qr = true
+            if let Some(ent) = r.get_mut(Vec2::new(j as i8, i as i8)) {
+                *ent = r_s;
+            }
+
+            q *= r_s;
+            y = y - q;
+        }
+
+        let y_len = y.iter_row().map(|v| v[0] * v[0]).sum::<f64>().sqrt();
+        assert_ne!(y_len, 0.);
+        // It may out of range if is_full_qr = true
+        if let Some(ent) = r.get_mut(Vec2::new(j as i8, j as i8)) {
+            *ent = y_len;
+        }
+        y *= 1. / y_len;
+        qs.push(y);
+    }
+
+    let mut q = Matrix2D::new(Vec2::new(qs.len() as i8, qs[0].row() as i8));
+    for (i, iq) in qs.iter().enumerate() {
+        for j in 0..iq.row() {
+            let v = iq.get(Vec2::new(0, j as i8)).unwrap();
+            *q.get_mut(Vec2::new(i as i8, j as i8)).unwrap() = *v;
+        }
+    }
+
+    (q, r)
+}
