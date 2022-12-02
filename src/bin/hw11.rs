@@ -8,8 +8,8 @@ fn main() {
         ],
     )
     .unwrap();
-    println!("A =\n{}", a);
+    println!("A =\n{a:>4}");
     let (q, r) = gram_schmidt(a, false);
-    println!("Q =\n{}", q);
-    println!("R =\n{}", r);
+    println!("Q =\n{q:>10.7}");
+    println!("R =\n{r:>10.7}");
 }

@@ -430,7 +430,8 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for i in 0..self.row() {
             for j in 0..self.col() {
-                write!(f, "{} ", self.get(Vec2::new(j as i8, i as i8)).unwrap())?;
+                let v = self.get(Vec2::new(j as i8, i as i8)).unwrap();
+                f.pad(&format!("{} ", v))?;
             }
             writeln!(f)?;
         }
