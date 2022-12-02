@@ -109,9 +109,9 @@ where
         for r in 0..size.y {
             for c in 0..size.x {
                 let mut acc = T::default();
-                for i in 0..self.size().y {
-                    let left = self.get(Vec2::new(i, r)).unwrap().clone();
-                    let right = other.get(Vec2::new(c, i)).unwrap().clone();
+                for i in 0..self.col() {
+                    let left = self.get(Vec2::new(i as i8, r)).unwrap().clone();
+                    let right = other.get(Vec2::new(c, i as i8)).unwrap().clone();
                     let prod = (left * right).clone();
                     acc += prod;
                 }
@@ -123,7 +123,7 @@ where
     }
 }
 
-impl<'a, T> Add for Matrix2D<T>
+impl<T> Add for Matrix2D<T>
 where
     T: Add<Output = T> + Clone,
 {
@@ -149,7 +149,7 @@ where
     }
 }
 
-impl<'a, T> Sub for Matrix2D<T>
+impl<T> Sub for Matrix2D<T>
 where
     T: Sub<Output = T> + Clone,
 {
@@ -172,6 +172,18 @@ where
         }
 
         Matrix2D::from_vec(self.size(), store).unwrap()
+    }
+}
+
+impl<T, S> MulAssign<S> for Matrix2D<T>
+where
+    T: MulAssign<S>,
+    S: Copy,
+{
+    fn mul_assign(&mut self, rhs: S) {
+        for ent in self.iter_mut() {
+            *ent *= rhs;
+        }
     }
 }
 
@@ -317,6 +329,10 @@ impl<T> Matrix2D<T> {
 
     pub fn iter_col(&self) -> IterCol<T> {
         IterCol { mat: &self, idx: 0 }
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.store.iter_mut()
     }
 }
 
@@ -497,6 +513,15 @@ mod tests {
         let c = a.mul(b).unwrap();
 
         let expected = Matrix2D::from_vec(Vec2::new(2, 2), vec![41, 48, 17, 20]).unwrap();
+        assert_eq!(c, expected);
+
+        let a = Matrix2D::from_vec(Vec2::new(1, 3), vec![1, 2, 2])
+            .unwrap()
+            .transpose();
+        let b = Matrix2D::from_vec(Vec2::new(1, 3), vec![4, 3, 2]).unwrap();
+        let c = a.mul(b).unwrap();
+
+        let expected = Matrix2D::from_vec(Vec2::new(1, 1), vec![14]).unwrap();
         assert_eq!(c, expected);
     }
 
