@@ -271,7 +271,7 @@ impl<T> Matrix2D<T> {
         }
 
         for i in 0..self.col() {
-            *self.get_mut(Vec2::new(row as i8, i as i8)).unwrap() *= c.clone();
+            *self.get_mut(Vec2::new(i as i8, row as i8)).unwrap() *= c.clone();
         }
 
         Ok(())
@@ -466,6 +466,14 @@ mod tests {
             .unwrap()
             .transpose();
         let expected = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 3, 5, 2, 4, 6]).unwrap();
+        assert_eq!(m, expected);
+    }
+
+    #[test]
+    fn test_mul_scalar() {
+        let mut m = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 2, 3, 4, 5, 6]).unwrap();
+        m.mul_scalar(1, 3).unwrap();
+        let expected = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 2, 3, 12, 15, 18]).unwrap();
         assert_eq!(m, expected);
     }
 }
