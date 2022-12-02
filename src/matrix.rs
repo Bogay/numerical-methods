@@ -2,7 +2,7 @@ use crate::vec2::{Square, Vec2};
 use num_traits::One;
 use std::{
     fmt::{Debug, Display},
-    ops::{Add, AddAssign, Deref, DerefMut, Mul, MulAssign, Sub},
+    ops::{Add, AddAssign, Mul, MulAssign, Sub},
     str::FromStr,
 };
 
@@ -310,19 +310,59 @@ impl<T> Matrix2D<T> {
             size: Vec2::new(row as i8, col as i8),
         }
     }
-}
 
-impl<T> Deref for Matrix2D<T> {
-    type Target = [T];
+    pub fn iter_row(&self) -> IterRow<T> {
+        IterRow { mat: &self, idx: 0 }
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.store
+    pub fn iter_col(&self) -> IterCol<T> {
+        IterCol { mat: &self, idx: 0 }
     }
 }
 
-impl<T> DerefMut for Matrix2D<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.store
+pub struct IterRow<'a, T> {
+    mat: &'a Matrix2D<T>,
+    idx: usize,
+}
+
+impl<'a, T> Iterator for IterRow<'a, T> {
+    type Item = Vec<&'a T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= self.mat.row() {
+            return None;
+        }
+
+        let mut v = Vec::with_capacity(self.mat.col());
+        for i in 0..self.mat.col() {
+            v.push(self.mat.get(Vec2::new(i as i8, self.idx as i8)).unwrap());
+        }
+
+        self.idx += 1;
+        Some(v)
+    }
+}
+
+pub struct IterCol<'a, T> {
+    mat: &'a Matrix2D<T>,
+    idx: usize,
+}
+
+impl<'a, T> Iterator for IterCol<'a, T> {
+    type Item = Vec<&'a T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= self.mat.col() {
+            return None;
+        }
+
+        let mut v = Vec::with_capacity(self.mat.row());
+        for i in 0..self.mat.row() {
+            v.push(self.mat.get(Vec2::new(self.idx as i8, i as i8)).unwrap());
+        }
+
+        self.idx += 1;
+        Some(v)
     }
 }
 
@@ -475,5 +515,24 @@ mod tests {
         m.mul_scalar(1, 3).unwrap();
         let expected = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 2, 3, 12, 15, 18]).unwrap();
         assert_eq!(m, expected);
+    }
+
+    #[test]
+    fn test_iter_row() {
+        let m = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 2, 3, 4, 5, 6]).unwrap();
+        let mut it = m.iter_row();
+        assert_eq!(it.next(), Some(vec![&1, &2, &3]));
+        assert_eq!(it.next(), Some(vec![&4, &5, &6]));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_iter_col() {
+        let m = Matrix2D::from_vec(Vec2::new(3, 2), vec![1, 2, 3, 4, 5, 6]).unwrap();
+        let mut it = m.iter_col();
+        assert_eq!(it.next(), Some(vec![&1, &4]));
+        assert_eq!(it.next(), Some(vec![&2, &5]));
+        assert_eq!(it.next(), Some(vec![&3, &6]));
+        assert_eq!(it.next(), None);
     }
 }
