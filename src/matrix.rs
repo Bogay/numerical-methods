@@ -131,7 +131,11 @@ where
 
     fn add(self, rhs: Self) -> Self::Output {
         if self.size() != rhs.size() {
-            panic!("Different matrix size");
+            panic!(
+                "Different matrix size, except {}, got {}",
+                self.size(),
+                rhs.size()
+            );
         }
 
         let mut store = Vec::with_capacity(self.col() * self.row());
