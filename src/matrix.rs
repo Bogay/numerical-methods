@@ -2,7 +2,7 @@ use crate::vec2::{Square, Vec2};
 use num_traits::One;
 use std::{
     fmt::{Debug, Display},
-    ops::{Add, AddAssign, Mul, MulAssign, Sub},
+    ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Sub},
     str::FromStr,
 };
 
@@ -110,8 +110,9 @@ where
             for c in 0..size.x {
                 let mut acc = T::default();
                 for i in 0..self.col() {
-                    let left = self.get(Vec2::new(i as i8, r)).unwrap().clone();
-                    let right = other.get(Vec2::new(c, i as i8)).unwrap().clone();
+                    let i = i as i8;
+                    let left = self[(i, r)].clone();
+                    let right = other[(c, i)].clone();
                     let prod = (left * right).clone();
                     acc += prod;
                 }
@@ -141,9 +142,11 @@ where
         let mut store = Vec::with_capacity(self.col() * self.row());
 
         for i in 0..self.row() {
+            let i = i as i8;
             for j in 0..self.col() {
-                let a = self.get(Vec2::new(j as i8, i as i8)).unwrap().clone();
-                let b = rhs.get(Vec2::new(j as i8, i as i8)).unwrap().clone();
+                let j = j as i8;
+                let a = self[(j, i)].clone();
+                let b = rhs[(j, i)].clone();
                 let r = a + b;
                 store.push(r);
             }
@@ -167,9 +170,11 @@ where
         let mut store = Vec::with_capacity(self.col() * self.row());
 
         for i in 0..self.row() {
+            let i = i as i8;
             for j in 0..self.col() {
-                let a = self.get(Vec2::new(j as i8, i as i8)).unwrap().clone();
-                let b = rhs.get(Vec2::new(j as i8, i as i8)).unwrap().clone();
+                let j = j as i8;
+                let a = self[(j, i)].clone();
+                let b = rhs[(j, i)].clone();
                 let r = a - b;
                 store.push(r);
             }
@@ -303,8 +308,9 @@ impl<T> Matrix2D<T> {
         }
 
         for i in 0..self.col() {
-            let v = self.get(Vec2::new(src as i8, i as i8)).unwrap().clone() * c.clone();
-            *self.get_mut(Vec2::new(dst as i8, i as i8)).unwrap() += v;
+            let i = i as i8;
+            let v = self[(src as i8, i)].clone() * c.clone();
+            self[(dst as i8, i)] += v;
         }
 
         Ok(())
@@ -355,7 +361,7 @@ impl<'a, T> Iterator for IterRow<'a, T> {
 
         let mut v = Vec::with_capacity(self.mat.col());
         for i in 0..self.mat.col() {
-            v.push(self.mat.get(Vec2::new(i as i8, self.idx as i8)).unwrap());
+            v.push(&self.mat[(i as i8, self.idx as i8)]);
         }
 
         self.idx += 1;
@@ -378,7 +384,7 @@ impl<'a, T> Iterator for IterCol<'a, T> {
 
         let mut v = Vec::with_capacity(self.mat.row());
         for i in 0..self.mat.row() {
-            v.push(self.mat.get(Vec2::new(self.idx as i8, i as i8)).unwrap());
+            v.push(&self.mat[(self.idx as i8, i as i8)]);
         }
 
         self.idx += 1;
@@ -441,6 +447,30 @@ where
         }
 
         Ok(())
+    }
+}
+
+impl<I0, I1, T> Index<(I0, I1)> for Matrix2D<T>
+where
+    I0: Into<i8>,
+    I1: Into<i8>,
+    // T: Clone,
+{
+    type Output = T;
+
+    fn index(&self, (x, y): (I0, I1)) -> &Self::Output {
+        self.get(Vec2::new(x.into(), y.into())).unwrap()
+    }
+}
+
+impl<I0, I1, T> IndexMut<(I0, I1)> for Matrix2D<T>
+where
+    I0: Into<i8>,
+    I1: Into<i8>,
+    T: Clone,
+{
+    fn index_mut(&mut self, (x, y): (I0, I1)) -> &mut Self::Output {
+        self.get_mut(Vec2::new(x.into(), y.into())).unwrap()
     }
 }
 

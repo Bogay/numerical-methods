@@ -78,11 +78,7 @@ impl MyFunc {
 
 fn apply(f: &Matrix2D<MyFunc>, x: &Matrix2D<f64>) -> Matrix2D<f64> {
     let mut r = vec![];
-    let (x, y, k) = (
-        *x.get(Vec2::new(0, 0)).unwrap(),
-        *x.get(Vec2::new(1, 0)).unwrap(),
-        *x.get(Vec2::new(2, 0)).unwrap(),
-    );
+    let (x, y, k) = (x[(0, 0)], x[(1, 0)], x[(2, 0)]);
 
     for row in f.iter_row() {
         for f in row {
