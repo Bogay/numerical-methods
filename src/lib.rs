@@ -1,9 +1,11 @@
 mod lagrange;
 mod matrix;
+mod newton;
 mod vec2;
 
 pub use lagrange::Lagrange;
 pub use matrix::Matrix2D;
+pub use newton::Newton;
 pub use vec2::Vec2;
 
 use num_traits::{Float, Inv};
@@ -194,4 +196,28 @@ pub fn gram_schmidt(a: Matrix2D<f64>, is_full_qr: bool) -> (Matrix2D<f64>, Matri
     }
 
     (q, r)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_interpolation() {
+        const EPSILON: f64 = 0.000001;
+        let points = vec![
+            (0.6, 1.433329),
+            (0.7, 1.632316),
+            (0.8, 1.896481),
+            (0.9, 2.247908),
+            (1.0, 2.718282),
+        ];
+        let ans = (0.82, 1.9589097744);
+
+        let newton_eval = Newton::new(points.clone()).eval(ans.0);
+        let lagrange_eval = Lagrange::new(points.clone()).eval(ans.0);
+
+        assert!((ans.1 - newton_eval).abs() < EPSILON);
+        assert!((ans.1 - lagrange_eval).abs() < EPSILON);
+    }
 }
