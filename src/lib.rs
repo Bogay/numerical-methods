@@ -198,6 +198,17 @@ pub fn gram_schmidt(a: Matrix2D<f64>, is_full_qr: bool) -> (Matrix2D<f64>, Matri
     (q, r)
 }
 
+// Find least square solution x' for in consisten system Ax = b
+pub fn least_square_approximation(a: Matrix2D<f64>, b: Matrix2D<f64>) -> Matrix2D<f64> {
+    // Calculate A^T * A
+    let at = a.clone().transpose();
+    let ata = at.mul(a).unwrap();
+    // Calculat A^T * b
+    let bp = at.mul(b.clone()).unwrap();
+
+    plu_solve(ata, bp)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

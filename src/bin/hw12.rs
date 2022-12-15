@@ -98,7 +98,11 @@ fn multivariate_newton(
         let d_r = apply(&d_f, &x);
         let f_r = apply(&f, &x);
 
+        // Find least square approximation
+
+        // D_r^T * D_r
         let lx = d_r.clone().transpose().mul(d_r.clone()).unwrap();
+        // -D_r^T * F_r
         let mut rx = d_r.clone().transpose().mul(f_r.clone()).unwrap();
 
         for i in 0..rx.row() {
