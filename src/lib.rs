@@ -1,6 +1,8 @@
+mod lagrange;
 mod matrix;
 mod vec2;
 
+pub use lagrange::Lagrange;
 pub use matrix::Matrix2D;
 pub use vec2::Vec2;
 
