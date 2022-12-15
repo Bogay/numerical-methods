@@ -1,4 +1,4 @@
-use bogay::{Lagrange, Newton};
+use bogay::Newton;
 
 /// Use Newton’s divided differences to find the degree 4 interpolating polynomial for the data
 fn main() {

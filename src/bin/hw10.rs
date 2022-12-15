@@ -1,5 +1,5 @@
 extern crate bogay;
-use bogay::{least_square_approximation, plu_solve, Matrix2D, Vec2};
+use bogay::{least_square_approximation, Matrix2D, Vec2};
 
 // Least square approximation
 fn main() {

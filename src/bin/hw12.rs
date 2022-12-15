@@ -22,7 +22,7 @@ impl Funcs {
     }
 
     fn dx() -> impl Hw12Func {
-        |x1, y1, r, x, y, k| {
+        |x1, y1, _r, x, y, _k| {
             let p: f64 = x - x1;
             let q: f64 = y - y1;
 
@@ -36,7 +36,7 @@ impl Funcs {
     }
 
     fn dy() -> impl Hw12Func {
-        |x1, y1, r, x, y, k| {
+        |x1, y1, _r, x, y, _k| {
             let p: f64 = x - x1;
             let q: f64 = y - y1;
 
@@ -50,7 +50,7 @@ impl Funcs {
     }
 
     fn dr() -> impl Hw12Func {
-        |x1, y1, r, x, y, k| -1.
+        |_x1, _y1, _r, _x, _y, _k| -1.
     }
 }
 

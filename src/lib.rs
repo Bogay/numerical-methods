@@ -15,9 +15,9 @@ use std::{
     ops::{Add, AddAssign, Sub},
 };
 
-pub fn jacobi<'a, T>(a: Matrix2D<T>, b: Matrix2D<T>) -> Result<Matrix2D<T>, String>
+pub fn jacobi<T>(a: Matrix2D<T>, b: Matrix2D<T>) -> Result<Matrix2D<T>, String>
 where
-    T: Clone + Inv<Output = T> + Default + AddAssign + Float + Display,
+    T: Inv<Output = T> + Default + AddAssign + Float + Display,
     Standard: Distribution<T>,
     Matrix2D<T>: Add<Output = Matrix2D<T>> + Sub<Output = Matrix2D<T>>,
 {
@@ -33,8 +33,8 @@ where
 
     let mut d_inv = Matrix2D::new(a.size());
     for i in 0..a.col() {
-        let i = Vec2::new(i as i8, i as i8);
-        *d_inv.get_mut(i).unwrap() = a.get(i).unwrap().clone().inv();
+        let i = i as i8;
+        d_inv[(i, i)] = a[(i, i)].inv();
     }
 
     let mut l = a.clone();
@@ -55,8 +55,7 @@ where
         let _x = d_inv.mul(b.clone() - lu.mul(x.clone()).unwrap()).unwrap();
 
         let done = (0..x.row()).all(|i| {
-            let pos = Vec2::new(0, i as i8);
-            let diff = x.get(pos).unwrap().clone() - _x.get(pos).unwrap().clone();
+            let diff = x[(0, i as i8)] - _x[(0, i as i8)];
             diff == T::zero()
         });
         if done {
@@ -140,7 +139,7 @@ pub fn gram_schmidt(a: Matrix2D<f64>, is_full_qr: bool) -> (Matrix2D<f64>, Matri
         .map(|col| {
             Matrix2D::from_vec(
                 Vec2::new(1, a.row() as i8),
-                col.into_iter().map(|&v| v).collect(),
+                col.into_iter().copied().collect(),
             )
             .unwrap()
         })
@@ -204,7 +203,7 @@ pub fn least_square_approximation(a: Matrix2D<f64>, b: Matrix2D<f64>) -> Matrix2
     let at = a.clone().transpose();
     let ata = at.mul(a).unwrap();
     // Calculat A^T * b
-    let bp = at.mul(b.clone()).unwrap();
+    let bp = at.mul(b).unwrap();
 
     plu_solve(ata, bp)
 }

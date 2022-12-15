@@ -298,7 +298,7 @@ impl<T> Matrix2D<T> {
         Ok(())
     }
 
-    pub fn add_row<'a, C>(&'a mut self, dst: usize, src: usize, c: C) -> Result<(), String>
+    pub fn add_row<C>(&mut self, dst: usize, src: usize, c: C) -> Result<(), String>
     where
         T: AddAssign<T> + Mul<C, Output = T> + Clone,
         C: Clone,
@@ -326,7 +326,7 @@ impl<T> Matrix2D<T> {
             rows[i].push(v);
         }
 
-        let store = rows.into_iter().flat_map(|r| r).collect();
+        let store = rows.into_iter().flatten().collect();
         Self {
             store,
             size: Vec2::new(row as i8, col as i8),
@@ -334,11 +334,11 @@ impl<T> Matrix2D<T> {
     }
 
     pub fn iter_row(&self) -> IterRow<T> {
-        IterRow { mat: &self, idx: 0 }
+        IterRow { mat: self, idx: 0 }
     }
 
     pub fn iter_col(&self) -> IterCol<T> {
-        IterCol { mat: &self, idx: 0 }
+        IterCol { mat: self, idx: 0 }
     }
 
     fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
