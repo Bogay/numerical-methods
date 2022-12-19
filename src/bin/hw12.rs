@@ -77,16 +77,8 @@ impl MyFunc {
 }
 
 fn apply(f: &Matrix2D<MyFunc>, x: &Matrix2D<f64>) -> Matrix2D<f64> {
-    let mut r = vec![];
     let (x, y, k) = (x[(0, 0)], x[(1, 0)], x[(2, 0)]);
-
-    for row in f.iter_row() {
-        for f in row {
-            r.push(f.eval(x, y, k));
-        }
-    }
-
-    Matrix2D::from_vec(f.size(), r).unwrap()
+    f.map(|ff| ff.eval(x, y, k))
 }
 
 fn multivariate_newton(

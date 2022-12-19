@@ -41,7 +41,6 @@ impl Square {
         Self { offset, size }
     }
 
-    #[must_use]
     pub fn at_origin(size: Vec2) -> Self {
         Self::new(Vec2::new(0, 0), size)
     }

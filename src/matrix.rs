@@ -1,5 +1,5 @@
 use crate::vec2::{Square, Vec2};
-use num_traits::One;
+use num_traits::{One, Zero};
 use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Sub},
@@ -83,10 +83,10 @@ where
 
 impl<T> Matrix2D<T>
 where
-    T: One + Default + Clone,
+    T: One + Zero + Clone,
 {
     pub fn identity(row: usize, col: usize) -> Self {
-        let mut ret = Self::new(Vec2::new(col as i8, row as i8));
+        let mut ret = Self::fill(Vec2::new(col as i8, row as i8), T::zero());
         for i in 0..::std::cmp::min(row, col) {
             *ret.get_mut(Vec2::new(i as i8, i as i8)).unwrap() = T::one();
         }
@@ -131,28 +131,14 @@ where
     type Output = Matrix2D<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        if self.size() != rhs.size() {
-            panic!(
-                "Different matrix size, except {}, got {}",
-                self.size(),
-                rhs.size()
-            );
-        }
-
-        let mut store = Vec::with_capacity(self.col() * self.row());
-
-        for i in 0..self.row() {
-            let i = i as i8;
-            for j in 0..self.col() {
-                let j = j as i8;
-                let a = self[(j, i)].clone();
-                let b = rhs[(j, i)].clone();
-                let r = a + b;
-                store.push(r);
-            }
-        }
-
-        Matrix2D::from_vec(self.size(), store).unwrap()
+        assert_eq!(
+            self.size(),
+            rhs.size(),
+            "Different matrix size, except {}, got {}",
+            self.size(),
+            rhs.size()
+        );
+        self.zip(&rhs).map(|(u, v)| <T>::clone(u) + <T>::clone(v))
     }
 }
 
@@ -163,24 +149,14 @@ where
     type Output = Matrix2D<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        if self.size() != rhs.size() {
-            panic!("Different matrix size");
-        }
-
-        let mut store = Vec::with_capacity(self.col() * self.row());
-
-        for i in 0..self.row() {
-            let i = i as i8;
-            for j in 0..self.col() {
-                let j = j as i8;
-                let a = self[(j, i)].clone();
-                let b = rhs[(j, i)].clone();
-                let r = a - b;
-                store.push(r);
-            }
-        }
-
-        Matrix2D::from_vec(self.size(), store).unwrap()
+        assert_eq!(
+            self.size(),
+            rhs.size(),
+            "Different matrix size, except {}, got {}",
+            self.size(),
+            rhs.size()
+        );
+        self.zip(&rhs).map(|(u, v)| <T>::clone(u) - <T>::clone(v))
     }
 }
 
@@ -344,6 +320,35 @@ impl<T> Matrix2D<T> {
     fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.store.iter_mut()
     }
+
+    pub fn zip<'a, U>(&'a self, rhs: &'a Matrix2D<U>) -> Matrix2D<(&T, &U)> {
+        assert_eq!(self.size(), rhs.size());
+
+        let store = self
+            .iter_row()
+            .flatten()
+            .zip(rhs.iter_row().flatten())
+            .collect();
+
+        Matrix2D::from_vec(self.size(), store).unwrap()
+    }
+
+    pub fn map<F, U>(&self, f: F) -> Matrix2D<U>
+    where
+        F: Fn(&T) -> U,
+    {
+        let mut store = Vec::with_capacity(self.col() * self.row());
+        for i in 0..self.row() {
+            let i = i as i8;
+            for j in 0..self.col() {
+                let j = j as i8;
+                let r = f(&self[(j, i)]);
+                store.push(r);
+            }
+        }
+
+        Matrix2D::from_vec(self.size(), store).unwrap()
+    }
 }
 
 pub struct IterRow<'a, T> {
@@ -454,7 +459,6 @@ impl<I0, I1, T> Index<(I0, I1)> for Matrix2D<T>
 where
     I0: Into<i8>,
     I1: Into<i8>,
-    // T: Clone,
 {
     type Output = T;
 
