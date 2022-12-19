@@ -273,8 +273,8 @@ impl<T> Matrix2D<T> {
         }
 
         for k in 0..self.col() {
-            let a = self.index(Vec2::new(i as i8, k as i8));
-            let b = self.index(Vec2::new(j as i8, k as i8));
+            let a = self.index(Vec2::new(k as i8, i as i8));
+            let b = self.index(Vec2::new(k as i8, j as i8));
             self.store.swap(a, b)
         }
 
@@ -309,8 +309,8 @@ impl<T> Matrix2D<T> {
 
         for i in 0..self.col() {
             let i = i as i8;
-            let v = self[(src as i8, i)].clone() * c.clone();
-            self[(dst as i8, i)] += v;
+            let v = self[(i, src as i8)].clone() * c.clone();
+            self[(i, dst as i8)] += v;
         }
 
         Ok(())
@@ -593,6 +593,34 @@ mod tests {
         assert_eq!(it.next(), Some(vec![&1, &4]));
         assert_eq!(it.next(), Some(vec![&2, &5]));
         assert_eq!(it.next(), Some(vec![&3, &6]));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_swap() {
+        let mut m = Matrix2D::from_vec(Vec2::new(2, 2), vec![1, 2, 3, 4]).unwrap();
+        m.swap(0, 1).unwrap();
+
+        let mut it = m.iter_row();
+        assert_eq!(it.next(), Some(vec![&3, &4]));
+        assert_eq!(it.next(), Some(vec![&1, &2]));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_add_row() {
+        let mut m = Matrix2D::from_vec(Vec2::new(2, 2), vec![1, 2, 3, 4]).unwrap();
+        m.add_row(0, 1, 1).unwrap();
+
+        let mut it = m.iter_row();
+        assert_eq!(it.next(), Some(vec![&4, &6]));
+        assert_eq!(it.next(), Some(vec![&3, &4]));
+        assert_eq!(it.next(), None);
+
+        m.add_row(1, 0, 2).unwrap();
+        let mut it = m.iter_row();
+        assert_eq!(it.next(), Some(vec![&4, &6]));
+        assert_eq!(it.next(), Some(vec![&11, &16]));
         assert_eq!(it.next(), None);
     }
 }
