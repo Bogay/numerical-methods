@@ -78,33 +78,33 @@ pub fn plu_solve(a: Matrix2D<f64>, mut b: Matrix2D<f64>) -> Matrix2D<f64> {
 
     for c in 0..u.col() {
         let c = c as i8;
-        if u.get(Vec2::new(c, c)).unwrap() == &0. {
+        if u[(c, c)] == 0. {
             let mut k = c + 1;
-            while k < u.row() as i8 {
+            let row = u.row() as i8;
+            while k < row {
                 if u.get(Vec2::new(c, k)).unwrap() != &0. {
                     u.swap(k as usize, c as usize).unwrap();
                     p.swap(k as usize, c as usize).unwrap();
                     l.swap(k as usize, c as usize).unwrap();
-
                     b.swap(k as usize, c as usize).unwrap();
                     break;
                 }
                 k += 1;
             }
-            assert_ne!(k, u.row() as i8);
+            assert_ne!(k, row);
         }
 
         let d = *u.get(Vec2::new(c, c)).unwrap();
         assert_ne!(d, 0.);
         for r in c + 1..u.row() as i8 {
-            let s = -u.get(Vec2::new(c, r)).unwrap() / d;
+            let s = -u[(c, r)] / d;
             u.add_row(r as usize, c as usize, s).unwrap();
-            *l.get_mut(Vec2::new(c, r)).unwrap() = -s;
+            l[(c, r)] = -s;
         }
     }
 
     for i in 0..l.row().min(l.col()) {
-        *l.get_mut(Vec2::new(i as i8, i as i8)).unwrap() = 1.;
+        l[(i as i8, i as i8)] = 1.;
     }
 
     let mut x = b.clone();
@@ -113,20 +113,20 @@ pub fn plu_solve(a: Matrix2D<f64>, mut b: Matrix2D<f64>) -> Matrix2D<f64> {
         let r = r as i8;
         for c in 0..r {
             let c = c as i8;
-            let v = x.get(Vec2::new(0, c)).unwrap() * l.get(Vec2::new(c, r)).unwrap();
-            *x.get_mut(Vec2::new(0, r)).unwrap() -= v;
+            let v = x[(0, c)] * l[(c, r)];
+            x[(0, r)] -= v;
         }
-        *x.get_mut(Vec2::new(0, r)).unwrap() /= l.get(Vec2::new(r, r)).unwrap();
+        x[(0, r)] /= l[(r, r)];
     }
     // solve Ux = c
     for r in (0..u.row()).rev() {
         let r = r as i8;
         for c in r + 1..u.row() as i8 {
-            let v = x.get(Vec2::new(0, c)).unwrap() * u.get(Vec2::new(c, r)).unwrap();
-            *x.get_mut(Vec2::new(0, r)).unwrap() -= v;
+            let v = x[(0, c)] * u[(c, r)];
+            x[(0, r)] -= v;
         }
 
-        *x.get_mut(Vec2::new(0, r)).unwrap() /= u.get(Vec2::new(r, r)).unwrap();
+        x[(0, r)] /= u[(r, r)];
     }
 
     x
@@ -229,5 +229,25 @@ mod tests {
 
         assert!((ans.1 - newton_eval).abs() < EPSILON);
         assert!((ans.1 - lagrange_eval).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_jacobi() {
+        let a = Matrix2D::from_vec(Vec2::new(2, 2), vec![4., 2., 3., 4.]).unwrap();
+        let b = Matrix2D::from_vec(Vec2::new(1, 2), vec![8., 11.]).unwrap();
+        let x = jacobi(a.clone(), b.clone()).unwrap();
+        let bp = a.mul(x.clone()).unwrap();
+
+        assert_eq!(b, bp);
+    }
+
+    #[test]
+    fn test_plu_solve() {
+        let a = Matrix2D::from_vec(Vec2::new(2, 2), vec![3., 7., 2., 1.]).unwrap();
+        let b = Matrix2D::from_vec(Vec2::new(1, 2), vec![17., 4.]).unwrap();
+        let x = plu_solve(a.clone(), b.clone());
+        let bp = a.mul(x.clone()).unwrap();
+
+        assert_eq!(b, bp);
     }
 }
