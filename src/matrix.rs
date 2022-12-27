@@ -321,15 +321,14 @@ impl<T> Matrix2D<T> {
         self.store.iter_mut()
     }
 
+    fn iter(&self) -> impl Iterator<Item = &T> {
+        self.store.iter()
+    }
+
     pub fn zip<'a, U>(&'a self, rhs: &'a Matrix2D<U>) -> Matrix2D<(&T, &U)> {
         assert_eq!(self.size(), rhs.size());
 
-        let store = self
-            .iter_row()
-            .flatten()
-            .zip(rhs.iter_row().flatten())
-            .collect();
-
+        let store = self.iter().zip(rhs.iter()).collect();
         Matrix2D::from_vec(self.size(), store).unwrap()
     }
 
@@ -337,16 +336,7 @@ impl<T> Matrix2D<T> {
     where
         F: Fn(&T) -> U,
     {
-        let mut store = Vec::with_capacity(self.col() * self.row());
-        for i in 0..self.row() {
-            let i = i as i8;
-            for j in 0..self.col() {
-                let j = j as i8;
-                let r = f(&self[(j, i)]);
-                store.push(r);
-            }
-        }
-
+        let store = self.iter().map(f).collect();
         Matrix2D::from_vec(self.size(), store).unwrap()
     }
 }
